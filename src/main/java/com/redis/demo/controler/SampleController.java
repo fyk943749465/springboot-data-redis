@@ -219,5 +219,42 @@ public class SampleController {
         return "success";
     }
 
+    /**
+     * zset相关的操作
+     *
+     * @return
+     */
+    @GetMapping("/zsetOps")
+    public String zsetOps() {
+
+        // 向集合中插入元素并设置值
+        redisTemplate.boundZSetOps("zSetKey").add("zSetValue", 100D);
+
+        DefaultTypedTuple<String> p1 = new DefaultTypedTuple<>("zSetValue1", 2.1D);
+        DefaultTypedTuple<String> p2 = new DefaultTypedTuple<>("zSetValue2", 3.3D);
+        redisTemplate.boundZSetOps("zSetKey").add(new HashSet<>(Arrays.asList(p1, p2)));
+
+        // 按照排名先后（从大到小）打印指定区间内的元素，-1为全部打印
+        Set<String> setKey = redisTemplate.boundZSetOps("zSetKey").range(0, -1);
+        // 获取指定元素的分数
+        Double score = redisTemplate.boundZSetOps("zSetKey").score("zSetValue");
+        // 返回集合内的成员个数
+        Long size = redisTemplate.boundZSetOps("zSetKey").size();
+        // 返回集合内制定分数范围的成员个数
+        Long count = redisTemplate.boundZSetOps("zSetKey").count(0D, 4D);
+        // 返回指定成员的排名
+        Long startRank = redisTemplate.boundZSetOps("zSetKey").rank("zSetValue");
+        Long endRank = redisTemplate.boundZSetOps("zSetKey").reverseRank("zSetValue");
+        // 从集合中删除指定元素
+        redisTemplate.boundZSetOps("zSetKey").remove("zSetValue");
+        // 删除指定索引范围内的元素
+        redisTemplate.boundZSetOps("zSetKey").removeRange(0L, 3L);
+        // 删除指定分数范围内的元素
+        redisTemplate.boundZSetOps("zSetKey").removeRangeByScore(0D, 2D);
+        // 为指定元素增加分数
+        redisTemplate.boundZSetOps("zSetKey").incrementScore("zSetValue1", 3.4D);
+        return "success";
+    }
+
 }
 
