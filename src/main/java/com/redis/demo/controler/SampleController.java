@@ -5,10 +5,7 @@ import org.springframework.data.redis.core.*;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 @RestController
@@ -16,6 +13,8 @@ public class SampleController {
 
     @Autowired
     private RedisTemplate<String, String> redisTemplate;
+
+
 
     /**
      * redis 生产者测试，将数据发送到主题 redis-test-topic
@@ -156,5 +155,69 @@ public class SampleController {
         Boolean aBoolean = redisTemplate.boundHashOps("HashKey").hasKey("SmallKey");
         return "success";
     }
+
+    /**
+     * Set 类型相关操作
+     */
+    @GetMapping("/set")
+    public String setOps() {
+
+        // 写法1
+        redisTemplate.boundSetOps("setKey").add("setValue1", "setValue2", "setValue3");
+        // 写法2
+        BoundSetOperations<String, String> setKey = redisTemplate.boundSetOps("setKey");
+        setKey.add("setValue1", "setValue2", "setValue3");
+        // 写法3
+        SetOperations<String, String> opsForSet = redisTemplate.opsForSet();
+        opsForSet.add("setKey", "setValue1", "setValue2", "setValue3");
+
+        // 获取值
+        Set<String> setValues = redisTemplate.boundSetOps("setKey").members();
+
+        // 根据value从一个set中查询，是否存在
+        Boolean isEmpty = redisTemplate.boundSetOps("setKey").isMember("setValue");
+
+        // 获取set缓存的长度
+        Long size = redisTemplate.boundSetOps("setKey").size();
+
+        // 移除指定的元素
+        Long remove = redisTemplate.boundSetOps("setKey").remove("setValue1");
+
+        // 删除指定的key
+        Boolean result = redisTemplate.delete("setKey");
+        return "success";
+    }
+
+    /**
+     * list相关的操作
+     */
+    @GetMapping("/listOps")
+    public String listOps() {
+
+        redisTemplate.boundListOps("listKey").leftPush("listLeftValue1");
+        redisTemplate.boundListOps("listKey").rightPush("listRightValue2");
+        // 将List放入缓存
+        ArrayList<String> list = new ArrayList<>();
+        list.add("hello world");
+        // list 与 可变长参数的转换
+        redisTemplate.boundListOps("listKey")
+                .rightPushAll(list.stream().toArray(String[]::new));
+
+        BoundListOperations<String, String> listKey = redisTemplate.boundListOps("listKey");
+        List<String> strings = listKey.range(0, listKey.size());
+
+        // 从左侧弹出一个元素
+        String key1 = redisTemplate.boundListOps("listKey").leftPop();
+        // 从右侧弹出一个元素
+        String key2 = redisTemplate.boundListOps("listKey").rightPop();
+        // 根据索引查询元素
+        String element = redisTemplate.boundListOps("listKey").index(1);
+        // 根据索引修改值
+        redisTemplate.boundListOps("listKey").set(3L, "ListNewValue");
+        // 移除元素 移除3个值为value的元素
+        redisTemplate.boundListOps("listKey").remove(3L, "value");
+        return "success";
+    }
+
 }
 
